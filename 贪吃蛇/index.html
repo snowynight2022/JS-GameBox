@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>贪吃蛇</title>
+		<style type="text/css">
+			#panel {
+				width: 500px;
+				height: 500px;
+				border: 1px solid black;
+				margin: 0px auto;
+				background-color: black;
+			}
+
+			/* body {
+				background-image: url(img/YiQuanChaoRen.jpg);
+			} */
+
+			button {
+				width: 200px;
+				height: 60px;
+				border: 1px solid;
+				border-radius: 25px;
+				font-size: 25px;
+				margin-left: 160px;
+				margin-top: 225px;
+
+			}
+
+			.littleBox {
+				width: 20px;
+				height: 20px;
+				background-color: black;
+				float: left;
+
+			}
+		</style>
+	</head>
+	<body>
+		<div id="panel">
+			<button type="button" onclick="start()" id="button">开始游戏</button>
+		</div>
+
+		<script type="text/javascript">
+			// 面板宽度
+			var panelWidth = 25;
+			// 面板长度
+			var panelLength = 25;
+			// snake长度
+			var size = 3;
+			// 食物位置随机数
+			var randomFood = Math.floor(Math.random() * 625);
+			// Snake对象构造器  保存坐标 x,y
+			function Snake(x, y) {
+				this.x = x;
+				this.y = y;
+			}
+			// 初始蛇的坐标
+			var snakeArr = [
+				new Snake(12, 10), new Snake(11, 10), new Snake(10, 10)
+			]
+			// 蛇最后一节
+			var lastSnake = new Snake(snakeArr[size - 1].x, snakeArr[size - 1].y);
+
+			// 创建一个 keynum对象 保存键码
+			// forwards 保存移动方向
+			var keynum = {};
+			keynum[37] = 37;
+			var forwards = 39;
+
+			/**
+			 * 开始游戏 
+			 * 执行定时任务
+			 */
+			function start() {
+				var btn = document.getElementById("button");
+				btn.style.display = "none";
+				
+				draw();
+				//定义键盘监听事件
+				window.onkeydown = function(e) {
+					keynum = {};
+					keynum[e.keyCode] = e.keyCode;
+				};
+				// 定时任务
+				setInterval(function() {
+					if (39 in keynum) {
+						if (forwards != 37) {
+							forwards = 39;
+							move(39);
+							draw();
+
+						} else {
+							move(37);
+							draw();
+						}
+					} //  39  right
+
+					if (38 in keynum) {
+						if (forwards != 40) {
+							forwards = 38;
+							move(38);
+							draw();
+
+						} else {
+							move(40);
+							draw();
+						}
+					} //  38  up
+
+					if (37 in keynum) {
+						if (forwards != 39) {
+							forwards = 37;
+							move(37);
+							draw();
+
+						} else {
+							move(39);
+							draw();
+						}
+					} //  37  left
+
+					if (40 in keynum) {
+						if (forwards != 38) {
+							forwards = 40;
+							move(40);
+							draw();
+
+						} else {
+							move(38);
+							draw();
+						}
+					} //  40  down
+
+				}, 150)
+			}
+
+			/**
+			 * 绘制保存在snakeArr数组中的坐标
+			 */
+			function draw() {
+				document.getElementById("panel").innerHTML = "";
+				for (var i = 0; i < panelWidth; i++) {
+					for (var j = 0; j < panelLength; j++) {
+						// 创建一个div元素
+						var div = document.createElement("div");
+						// 为小方块设置样式
+						div.className = "littleBox";
+						// 绘制坐标
+						for (var k = 0; k < snakeArr.length; k++) {
+							if (snakeArr[k].x == j && snakeArr[k].y == i) {
+
+								div.style.backgroundColor = "white";
+							}
+						}
+						var panel = document.getElementById("panel");
+						panel.appendChild(div);
+
+					}
+				}
+				// 添加食物
+				addFood();
+
+			}
+
+			/**
+			 * 移动贪吃蛇
+			 */
+			function move(keycode) {
+				// 保存移动之前的蛇尾坐标
+				lastSnake = new Snake(snakeArr[size - 1].x, snakeArr[size - 1].y);
+
+				for (var i = snakeArr.length - 1; i > 0; i--) { // 3 2 1 
+					snakeArr[i].x = snakeArr[i - 1].x;
+					snakeArr[i].y = snakeArr[i - 1].y;
+				}
+				// keycode 键码 传递蛇的移动方向
+				switch (keycode) {
+					case 39:
+						// right
+						snakeArr[0].x++;
+						break;
+					case 38:
+						// up
+						snakeArr[0].y--;
+						break;
+					case 37:
+						// left
+						snakeArr[0].x--;
+						break;
+					case 40:
+						// down
+						snakeArr[0].y++;
+						break;
+					default:
+						console.log("非法数值");
+						break;
+				}
+				// 检测是否碰墙
+				crashWall();
+				// 检测是否咬住自己
+				crashSelf();
+			}
+
+			/**
+			 * 添加食物
+			 * 吃掉食物后刷新
+			 */
+			function addFood() {
+				// 取得随机数randomFood的值所在的div
+				var food = document.getElementsByClassName("littleBox")[randomFood];
+
+				while (food.style.backgroundColor == "white") {
+					eatFood();
+					randomFood = Math.floor(Math.random() * 625);
+
+					food = document.getElementsByClassName("littleBox")[randomFood];
+				}
+
+				document.getElementsByClassName("littleBox")[randomFood].style.backgroundColor = "red";
+
+			}
+
+			/**
+			 * 吃饭后身体变长
+			 */
+			function eatFood() {
+
+				snakeArr.push(lastSnake);
+				size++;
+				lastSnake = snakeArr[size - 1];
+			}
+
+			/**
+			 * 碰撞自身检测
+			 * 当头部的坐标等于 身体任意部位的坐标，游戏结束
+			 */
+			function crashSelf() {
+				for (var i = 1; i < snakeArr.length; i++) {
+					if (snakeArr[0].x == snakeArr[i].x && snakeArr[0].y == snakeArr[i].y) {
+						history.go(0);
+						alert("Game over!")
+					}
+				}
+			}
+
+			/**
+			 * 碰撞墙壁检测
+			 * 25*25 面板   x<0 || x>24时   y<0 || y>24时  
+			 */
+			function crashWall() {
+
+				if (snakeArr[0].x < 0 || snakeArr[0].x > 24 || snakeArr[0].y < 0 || snakeArr[0].y > 24) {
+					history.go(0);
+					alert("Game over!");
+				}
+
+			}
+			
+		</script>
+	</body>
+</html>
